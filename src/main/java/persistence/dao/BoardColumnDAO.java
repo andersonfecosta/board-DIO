@@ -18,7 +18,7 @@ public class BoardColumnDAO {
     private final Connection connection;
 
     public BoardColumnEntity insert(final BoardColumnEntity entity) throws SQLException {
-        var sql = "INSERT INTO BOARD_COLUMNS (name, `order`, kind, board_id) VALUES (?, ?, ?, ?);";
+        var sql = "INSERT INTO board_columns (name, `order`, kind, board_id) VALUES (?, ?, ?, ?);";
         try (var statement = connection.prepareStatement(sql)){
             var i = 1;
             statement.setString(i++, entity.getName());
@@ -35,7 +35,7 @@ public class BoardColumnDAO {
 
     public List<BoardColumnEntity> findByBoardId(Long id) throws SQLException{
         List<BoardColumnEntity> entities = new ArrayList<>();
-        var sql = "SELECT FROM board_columns WHERE board_id = ? ORDER BY 'order';";
+        var sql = "SELECT id, name, `order`, kind FROM board_columns WHERE board_id = ? ORDER BY 'order';";
         try (var statement = connection.prepareStatement(sql)){
             statement.setLong(1,id);
             statement.executeQuery();
