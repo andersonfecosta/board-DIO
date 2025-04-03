@@ -1,6 +1,7 @@
 package persistence.dao;
 
 import com.mysql.cj.jdbc.StatementImpl;
+import dto.BoardColumnDTO;
 import lombok.AllArgsConstructor;
 import persistence.entity.BoardColumnEntity;
 import persistence.entity.BoardColumnKindEnum;
@@ -19,7 +20,7 @@ public class BoardColumnDAO {
 
     public BoardColumnEntity insert(final BoardColumnEntity entity) throws SQLException {
         var sql = "INSERT INTO board_columns (name, `order`, kind, board_id) VALUES (?, ?, ?, ?);";
-        try (var statement = connection.prepareStatement(sql)){
+        try (var statement = connection.prepareStatement(sql)) {
             var i = 1;
             statement.setString(i++, entity.getName());
             statement.setInt(i++, entity.getOrder());
@@ -33,11 +34,11 @@ public class BoardColumnDAO {
         }
     }
 
-    public List<BoardColumnEntity> findByBoardId(Long id) throws SQLException{
+    public List<BoardColumnEntity> findByBoardId(Long id) throws SQLException {
         List<BoardColumnEntity> entities = new ArrayList<>();
         var sql = "SELECT id, name, `order`, kind FROM board_columns WHERE board_id = ? ORDER BY 'order';";
-        try (var statement = connection.prepareStatement(sql)){
-            statement.setLong(1,id);
+        try (var statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
             statement.executeQuery();
             var resultSet = statement.getResultSet();
             while (resultSet.next()) {
@@ -49,6 +50,29 @@ public class BoardColumnDAO {
                 entities.add(entity);
             }
             return entities;
+        }
+    }
+
+    public List<BoardColumnDTO> findByBoardIdWhithDetails(Long id) throws SQLException {
+        List<BoardColumnDTO> dtos = new ArrayList<>();
+        var sql = """
+                SELECT bc.id, bc.name, bc.kind,
+                COUNT (SELECT c.id FROM cards c WHERE c.board_columns_id = bc.id) cards_amount
+                FROM board_columns bc
+                WHERE board_id = ? ORDER BY 'order';
+                """;
+        try (var statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+            statement.executeQuery();
+            var resultSet = statement.getResultSet();
+            while (resultSet.next()) {
+                var dto = new BoardColumnDTO(resultSet.getLong("bc.id"),
+                        resultSet.getString("bc.name"),
+                        findByName(resultSet.getNString("bc.kind")),
+                        resultSet.getInt("cards_amount"));
+                dtos.add(dto);
+            }
+            return dtos;
         }
     }
 }

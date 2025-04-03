@@ -16,7 +16,7 @@ import static persistence.entity.BoardColumnKindEnum.*;
 
 public class MainMenu {
 
-    private final Scanner scanner = new Scanner(System.in);
+    private final Scanner scanner = new Scanner(System.in).useDelimiter("\n");
 
     public void execute() throws SQLException {
         System.out.println("BEM VINDO AO BOARD MANAGER");
