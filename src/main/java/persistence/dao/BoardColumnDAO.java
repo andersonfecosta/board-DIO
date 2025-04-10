@@ -4,7 +4,7 @@ import com.mysql.cj.jdbc.StatementImpl;
 import dto.BoardColumnDTO;
 import lombok.AllArgsConstructor;
 import persistence.entity.BoardColumnEntity;
-import persistence.entity.CardsEntity;
+import persistence.entity.CardEntity;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.Objects.isNull;
 import static persistence.entity.BoardColumnKindEnum.findByName;
 
 @AllArgsConstructor
@@ -58,7 +59,7 @@ public class BoardColumnDAO {
         List<BoardColumnDTO> dtos = new ArrayList<>();
         var sql = """
                 SELECT bc.id, bc.name, bc.kind,
-                COUNT (SELECT c.id FROM cards c WHERE c.board_columns_id = bc.id) cards_amount
+                (SELECT COUNT (c.id) FROM cards c WHERE c.board_columns_id = bc.id) cards_amount
                 FROM board_columns bc
                 WHERE board_id = ? ORDER BY 'order';
                 """;
@@ -86,7 +87,7 @@ public class BoardColumnDAO {
                c.title,
                c.descripton
         FROM board_columns bc
-        INNER JOIN cards c
+        LEFT JOIN cards c
         ON c.board_columns_id = bc.id
         WHERE bc.id = ?;
         """;
@@ -99,12 +100,16 @@ public class BoardColumnDAO {
                 entity.setName(resultSet.getString("bc.name"));
                 entity.setKind(findByName(resultSet.getNString("bc.kind")));
                 do {
-                    var card = new CardsEntity();
+                    if (isNull(resultSet.getString("c.tilte"))) {
+                        break;
+                    }
+                    var card = new CardEntity();
                     card.setId(resultSet.getLong("c.id"));
                     card.setTitle(resultSet.getString("c.title"));
                     card.setDescription(resultSet.getString("c.description"));
                     entity.getCards().add(card);
                 } while (resultSet.next());
+                return Optional.of(entity);
             }
 
             return Optional.empty();

@@ -3,9 +3,11 @@ package ui;
 import lombok.AllArgsConstructor;
 import persistence.entity.BoardColumnEntity;
 import persistence.entity.BoardEntity;
+import persistence.entity.CardEntity;
 import service.BoardColumnQueryService;
 import service.BoardQueryService;
 import service.CardQueryService;
+import service.CardService;
 
 import java.sql.SQLException;
 import java.util.Scanner;
@@ -57,7 +59,17 @@ public class BoardMenu {
         }
     }
 
-    private void createCard() {
+    private void createCard() throws SQLException {
+        var card = new CardEntity();
+        System.out.println("Informe o título do card:");
+        card.setTitle(scanner.next());
+        System.out.println("Informe a descrição do card:");
+        card.setDescription(scanner.next());
+        card.setBoardColumn(entity.getInitialColumn());
+        try (var connection = getConnection()) {
+            new CardService(connection).insert(card);
+        }
+
 
     }
 
@@ -101,7 +113,7 @@ public class BoardMenu {
             var column = new BoardColumnQueryService(connection).findById(selectedColumn);
             column.ifPresent(co -> {
                 System.out.printf("Coluna %S tipo %s\n", co.getName(), co.getKind());
-                co.getCards().forEach(ca -> System.out.printf("Card %s - %s\nDescrição: %¨s",
+                co.getCards().forEach(ca -> System.out.printf("Card %s - %s\nDescrição: %¨s\n",
                         ca.getId(), ca.getTitle(), ca.getDescription()));
             });
         }
@@ -117,7 +129,7 @@ public class BoardMenu {
                                 System.out.printf("Card %s - %s.\n", c.id(), c.title());
                                 System.out.printf("Descrição: %s.\n", c.description());
                                 System.out.println(c.blocked() ? "Está bloqueado. Motivo: " + c.blockReason() : "Não está bloqueado");
-                                System.out.printf("Já foi bloqueado %s vezes.\n", c.blocksAmount());
+                                System.out.printf("Já foi bloqueado %s vezes\n", c.blocksAmount());
                                 System.out.printf("Estã na coluna %s - %s\n", c.columnId(), c.columnName());
                             },
                             () -> System.out.printf("ID %s não encontrado\n",selectedCardId));

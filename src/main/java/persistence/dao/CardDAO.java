@@ -1,7 +1,9 @@
 package persistence.dao;
 
+import com.mysql.cj.jdbc.StatementImpl;
 import dto.CardDetailsDTO;
 import lombok.AllArgsConstructor;
+import persistence.entity.CardEntity;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -14,6 +16,21 @@ public class CardDAO {
 
     private Connection connection;
 
+    public CardEntity insert(final CardEntity entity) throws SQLException {
+        var sql = "INSERT INTO cards (title, description, board_column_id) VALUES (?,?,?)";
+        try (var statement = connection.prepareStatement(sql)){
+            var i = 1;
+            statement.setString(i++, entity.getTitle());
+            statement.setString(i++, entity.getDescription());
+            statement.setLong(i, entity.getBoardColumn().getId());
+            statement.executeUpdate();
+            if (statement instanceof StatementImpl impl) {
+                entity.setId(impl.getLastInsertID());
+            }
+        }
+        return entity;
+    }
+
     public Optional<CardDetailsDTO> findById(final Long id) throws SQLException {
         var sql =
                 """
@@ -24,7 +41,7 @@ public class CardDAO {
                         b.block_reason,
                         c.board_columns_id,
                         bc.name,
-                        COUNT(SELECT sub_b.id
+                        (SELECT COUNT(sub_b.id)
                                 FROM blocks sub_b
                                 WHERE sub_b.card_id = c.id) blocks_amount
                      FROM cards c
@@ -33,7 +50,7 @@ public class CardDAO {
                         AND b.unblock_at IS NULL
                      INNER JOIN board_columns bc
                         ON bc.id = c.board_columns_id
-                     WHERE id = ?;
+                     WHERE c.id = ?;
                 """;
         try (var statement = connection.prepareStatement(sql)){
             statement.setLong(1, id);
