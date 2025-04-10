@@ -1,5 +1,6 @@
 package ui;
 
+import dto.BoardColumnInfoDTO;
 import lombok.AllArgsConstructor;
 import persistence.entity.BoardColumnEntity;
 import persistence.entity.BoardEntity;
@@ -68,12 +69,23 @@ public class BoardMenu {
         card.setBoardColumn(entity.getInitialColumn());
         try (var connection = getConnection()) {
             new CardService(connection).insert(card);
+            System.out.println("Card criado com sucesso!");
         }
 
 
     }
 
-    private void moveCardToNextColumn() {
+    private void moveCardToNextColumn() throws SQLException{
+        System.out.println("Informe o ID do card que deseja mover:");
+        var cardId = scanner.nextLong();
+        var boardColumnsInfo = entity.getBoardColumns()
+                .stream().map(bc -> new BoardColumnInfoDTO(bc.getId(), bc.getOrder(), bc.getKind()))
+                .toList();
+        try (var connection = getConnection()) {
+            new CardService(connection).moveToNextColumn(cardId,boardColumnsInfo);
+        } catch (RuntimeException ex) {
+            System.out.println(ex.getMessage());
+        }
 
     }
 

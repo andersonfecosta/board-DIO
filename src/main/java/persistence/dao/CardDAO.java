@@ -31,6 +31,19 @@ public class CardDAO {
         return entity;
     }
 
+    public void moveToNextColumn(final Long columnId, final Long cardId) throws SQLException{
+        var sql =
+                """
+                UPDATE cards SET board_column_id = ? WHERE id = ?;
+                """;
+        try (var statement = connection.prepareStatement(sql)) {
+            var i = 1;
+            statement.setLong(i++, columnId);
+            statement.setLong(i, cardId);
+            statement.executeUpdate();
+        }
+    }
+
     public Optional<CardDetailsDTO> findById(final Long id) throws SQLException {
         var sql =
                 """
